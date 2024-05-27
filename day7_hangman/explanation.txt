@@ -1,0 +1,81 @@
+If you want each word to be stored exactly as long as it needs to be (i.e., without any extra space), you can dynamically allocate memory for each word based on its length. This approach ensures that each word is stored with the exact amount of memory it requires, without any extra padding.
+
+Here's how you can modify the code to achieve this:
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+char** open_words(int* num_words);
+
+int main(void) {
+    int num_words;
+    char** words = open_words(&num_words);
+    printf("Number of words: %d\n", num_words);
+    for(int i = 0; i < num_words; i++) {
+        printf("%s\n", words[i]);
+    }
+    // Free memory allocated for words
+    for (int i = 0; i < num_words; i++) {
+        free(words[i]);
+    }
+    free(words);
+    return 0;
+}
+
+char** open_words(int* num_words) {
+    *num_words = 0; // Initialize word counter
+    char line[100];
+    FILE *ptr;
+    ptr = fopen("./words.csv", "r");
+    if (ptr == NULL) {
+        printf("Error while opening the file.\n");
+        exit(1);
+    }
+
+    // Determine the number of words in the file
+    while (fgets(line, sizeof(line), ptr) != NULL) {
+        char* token = strtok(line, ",\n");
+        while (token != NULL) {
+            (*num_words)++;
+            token = strtok(NULL, ",\n");
+        }
+    }
+    rewind(ptr); // Reset file pointer to the beginning of the file
+
+    // Dynamically allocate memory for the words array
+    char** words = (char**)malloc((*num_words) * sizeof(char*));
+    if (words == NULL) {
+        printf("Memory allocation failed.\n");
+        exit(1);
+    }
+
+    // Read words from the file and store them in the dynamically allocated array
+    int index = 0;
+    while (fgets(line, sizeof(line), ptr) != NULL) {
+        char* token = strtok(line, ",\n");
+        while (token != NULL) {
+            int word_length = strlen(token);
+            words[index] = (char*)malloc((word_length + 1) * sizeof(char));
+            if (words[index] == NULL) {
+                printf("Memory allocation failed.\n");
+                exit(1);
+            }
+            strcpy(words[index], token);
+            index++;
+            token = strtok(NULL, ",\n");
+        }
+    }
+    fclose(ptr);
+    return words;
+}
+```
+
+In this modified version:
+
+- We calculate the length of each word using `strlen(token)`.
+- Memory is dynamically allocated for each word based on its length (`(word_length + 1)` to include space for the null terminator).
+- Each word is copied to the dynamically allocated memory using `strcpy()`.
+
+With this approach, each word is stored exactly as long as it needs to be, without any extra padding. This ensures efficient memory usage and avoids wasting memory on unnecessary padding.
