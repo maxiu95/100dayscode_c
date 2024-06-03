@@ -13,20 +13,23 @@ struct Bidder {
 	double bid_amount;
 };
 
+void clear_screen(void);
 void get_valid_name(struct Bidder *bidder_ptr); // acts as a verification loop until a correct value is passed by the user
 bool get_name_input(char *name); // directly takes input from user, returning true if meets correct conditions
 void get_valid_bid(struct Bidder *bidder_ptr);
 bool get_bid_input(double *amount);
 char get_valid_keep_bidding(void);
 bool get_valid_y_or_n(char *y_or_n);
+void check_max_bid(struct Bidder arr[], int num_bids, double *max, int *max_index);
+void print_auction_winner(struct Bidder arr[], int index);
+void print_bid_history(struct Bidder arr[], int num_bids);
 
 int main(void) {
 	struct Bidder collected_bids[MAX_BIDS]; // store bid history
 	int num_bids = 0;
 	bool still_bidding = true;
-	// collect bids clearing the screen after each one and storing as a struct in bids
-	// keep track of highest and lowest bids
-	// end of program print highest and lowest bidder as well as history of bids
+	double max = 0.0;
+	int max_index = 0;
 
 	while(still_bidding) {
 		struct Bidder new_bidder;
@@ -37,17 +40,24 @@ int main(void) {
 		// add to array
 		collected_bids[num_bids] = new_bidder;
 		num_bids++;
+		// check max bid
+		check_max_bid(collected_bids, num_bids, &max, &max_index);
+		// check continue
 		if(get_valid_keep_bidding() == 'n') {
+			clear_screen();
 			break;
 		}
-		// clear screen
-		printf("\033[2J\033[1;1H");
+		clear_screen();
 
 	}
-	for(int i = 0; i < num_bids; i++) {
-		printf("%s %.2lf\n", collected_bids[i].name, collected_bids[i].bid_amount);
+	printf("||[RESULTS]||\n\n");
+	print_auction_winner(collected_bids, max_index);
+	print_bid_history(collected_bids, num_bids);
 
-	}
+}
+
+void clear_screen(void) {
+	printf("\033[2J\033[1;1H");
 }
 
 void get_valid_name(struct Bidder *bidder_ptr) {
@@ -137,12 +147,30 @@ bool get_valid_y_or_n(char *y_or_n) {
 	if (strlen(input) > 2) {
 		return false;
 	}
-	for(int i = 0; i < strlen(input); i++) {
-		tolower(input[i]);
-	}
+	tolower(input[0]);
 	if(input[0] != 'y' && input[0] != 'n') {
 		return false;
 	}
 	*y_or_n = input[0];
 	return true;
 } 
+
+void check_max_bid(struct Bidder arr[], int num_bids, double *max, int *max_index) {
+	if(arr[num_bids-1].bid_amount > *max) {
+		*max = arr[num_bids-1].bid_amount;
+		*max_index = num_bids-1;
+	}
+}
+
+void print_auction_winner(struct Bidder arr[], int index) {
+	printf("==WINNER==\n");
+	printf("The auction winner is... %s with a bid of $%.2lf!\n", arr[index].name, arr[index].bid_amount);
+}
+
+void print_bid_history(struct Bidder arr[], int num_bids) {
+	printf("\n==BID HISTORY==\n");
+	printf("[NAME]\t\t[BID AMOUNT]\n");
+	for(int i = 0; i < num_bids; i++) {
+		printf("%s\t\t   $%.2lf\n", arr[i].name, arr[i].bid_amount);
+	}
+}
